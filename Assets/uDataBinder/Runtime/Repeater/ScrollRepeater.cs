@@ -154,8 +154,8 @@ namespace uDataBinder.Repeater
             }
 
             rectTransform.sizeDelta = new Vector2(
-                rows * (itemSize.x + _spacing.x) - _spacing.x - scrollRectTransform.rect.width,
-                cols * (itemSize.y + _spacing.y) - _spacing.y
+                (rows <= 1) ? rectTransform.sizeDelta.x : rows * (itemSize.x + _spacing.x) - _spacing.x - scrollRectTransform.rect.width,
+                (cols <= 1) ? rectTransform.sizeDelta.y : cols * (itemSize.y + _spacing.y) - _spacing.y
             );
 
             return task;
