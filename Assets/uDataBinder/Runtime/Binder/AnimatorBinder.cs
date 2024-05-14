@@ -42,7 +42,7 @@ namespace uDataBinder.Binder
             switch (_type)
             {
                 case AnimatorBinderType.Bool:
-                    Animator.SetBool(_name, DataBinding.GetValue<bool>(_value));
+                    Animator.SetBool(_name, ConditionBinding.Parse(_value, this));
                     break;
                 case AnimatorBinderType.Float:
                     Animator.SetFloat(_name, DataBinding.GetValue<float>(_value));
