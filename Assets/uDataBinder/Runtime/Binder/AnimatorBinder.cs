@@ -38,7 +38,6 @@ namespace uDataBinder.Binder
 
         protected override Task RebuildAsync()
         {
-            Debug.Log("RebuildAsync");
             switch (_type)
             {
                 case AnimatorBinderType.Bool:
