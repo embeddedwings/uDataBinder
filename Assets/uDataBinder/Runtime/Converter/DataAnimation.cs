@@ -8,7 +8,7 @@ namespace uDataBinder.Converter
     public class DataAnimation : DataConverter
     {
         [SerializeField] protected float _duration = 1f;
-        [SerializeField] protected AnimationCurve _curve = AnimationCurve.Linear(0, 0, 1, 1);
+        [SerializeField] protected AnimationCurve _curve = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
         protected float _currentValue = 0;
         protected float _fromValue = -1;
