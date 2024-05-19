@@ -46,8 +46,8 @@ namespace uDataBinder.Binder
         {
             if (_isInitialized)
             {
-                DataBinding.Unregister(this);
-                SetDirty();
+                Release();
+                Initialize();
             }
         }
 
