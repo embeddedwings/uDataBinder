@@ -31,22 +31,16 @@ namespace uDataBinder
 
             _references[baseObject].Set(key, value);
 
-            var removeKeys = new List<string>();
             foreach (var lazyRegister in _lazyRegister)
             {
                 if (lazyRegister.Key.StartsWith(key))
                 {
-                    foreach (var v in lazyRegister.Value)
+                    var values = new List<(string, DataBinder, GameObject)>(lazyRegister.Value);
+                    foreach (var v in values)
                     {
                         Register(v.Item1, v.Item2, v.Item3);
                     }
-                    removeKeys.Add(lazyRegister.Key);
                 }
-            }
-
-            foreach (var removeKey in removeKeys)
-            {
-                _lazyRegister.Remove(removeKey);
             }
 
             Notify(key, baseObject);
