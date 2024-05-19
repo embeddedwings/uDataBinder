@@ -32,6 +32,9 @@ namespace uDataBinder.Demo
         public string count => "count: " + _count;
         public string countNotify => "count (notify): " + _count;
 
+        private int _count2 = 0;
+        public int Count2 => _count2;
+
         private float _prevTime;
 
         protected void Awake()
@@ -61,6 +64,24 @@ namespace uDataBinder.Demo
                 DataBinding.Notify("Test.Count", null, true);
                 _prevTime = Time.time;
             }
+        }
+
+        public void AddCount2()
+        {
+            _count2 += 100;
+            DataBinding.Notify("Test.Count2", null, true);
+        }
+
+        public void SubCount2()
+        {
+            _count2 -= 100;
+            DataBinding.Notify("Test.Count2", null, true);
+        }
+
+        public void ResetCount2()
+        {
+            _count2 = 0;
+            DataBinding.Notify("Test.Count2", null, true);
         }
 
         protected async void LateUpdate()
