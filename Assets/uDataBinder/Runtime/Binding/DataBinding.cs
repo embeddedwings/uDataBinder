@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -13,6 +13,7 @@ namespace uDataBinder
         private static readonly Dictionary<Utils.Nullable<GameObject>, DataBindingReference> _references = new();
         private static SortedDictionary<int, HashSet<DataBinder>> _rebuildList = new();
         private static readonly HashSet<DataBinder> _rebuildCompleted = new();
+        private static SortedDictionary<int, HashSet<DataBinder>> _rebuildNextList = new();
 
         private static readonly Dictionary<string, List<(string, DataBinder, GameObject)>> _lazyRegister = new();
 
@@ -155,20 +156,27 @@ namespace uDataBinder
             }
         }
 
+        public static void RebuildNextFrame(DataBinder dataBinder)
+        {
+            if (!_rebuildNextList.ContainsKey(dataBinder.HierarchyLevel))
+            {
+                _rebuildNextList.Add(dataBinder.HierarchyLevel, new HashSet<DataBinder>());
+            }
+            _rebuildNextList[dataBinder.HierarchyLevel].Add(dataBinder);
+        }
+
         public static async Task Execute(bool force = false)
         {
-            var tasks = new List<Task>();
-
             while (_rebuildList.Count > 0)
             {
                 var currentRebuildList = _rebuildList;
-
                 _rebuildList = new SortedDictionary<int, HashSet<DataBinder>>();
 
                 foreach (var target in currentRebuildList)
                 {
-                    tasks.Clear();
-                    foreach (var dataBinder in target.Value)
+                    var dataBinders = target.Value;
+                    var tasks = new List<Task>(dataBinders.Count);
+                    foreach (var dataBinder in dataBinders)
                     {
                         if (dataBinder != null)
                         {
@@ -186,11 +194,9 @@ namespace uDataBinder
                             }
 
                             _rebuildCompleted.Add(dataBinder);
-
                             tasks.Add(dataBinder.Rebuild());
                         }
                     }
-
                     await Task.WhenAll(tasks);
                 }
             }
@@ -202,6 +208,9 @@ namespace uDataBinder
 #endif
                 _rebuildCompleted.Clear();
             }
+
+            _rebuildList = _rebuildNextList;
+            _rebuildNextList = new SortedDictionary<int, HashSet<DataBinder>>();
         }
 
         public static void Notify(string key, GameObject baseObject = null, bool strict = false)
@@ -285,16 +294,10 @@ namespace uDataBinder
         public class RequireStruct<T> where T : struct { }
         public class RequireClass<T> where T : class { }
 
-        public static T GetValue<T>(string keys, GameObject baseObject = null, RequireStruct<T> missing = null) where T : struct
+        public static T ConvertValue<T>(object value, RequireStruct<T> missing = null) where T : struct
         {
             try
             {
-                var value = GetValue(keys, baseObject);
-                if (value == null)
-                {
-                    return (T)Convert.ChangeType(keys, typeof(T));
-                }
-
                 return (T)Convert.ChangeType(value, typeof(T));
             }
             catch (FormatException)
@@ -307,10 +310,26 @@ namespace uDataBinder
             }
         }
 
+        public static T ConvertValue<T>(object value, RequireClass<T> missing = null) where T : class
+        {
+            return value as T;
+        }
+
+        public static T GetValue<T>(string keys, GameObject baseObject = null, RequireStruct<T> missing = null) where T : struct
+        {
+            var value = GetValue(keys, baseObject);
+            if (value == null)
+            {
+                return (T)Convert.ChangeType(keys, typeof(T));
+            }
+
+            return ConvertValue<T>(value);
+        }
+
         public static T GetValue<T>(string keys, GameObject baseObject = null, RequireClass<T> missing = null)
         where T : class
         {
-            return GetValue(keys, baseObject) as T;
+            return ConvertValue<T>(GetValue(keys, baseObject));
         }
 
         public static bool SetValue(string keys, object value, GameObject baseObject = null)

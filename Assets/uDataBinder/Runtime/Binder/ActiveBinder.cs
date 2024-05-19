@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace uDataBinder.Binder
 {
-    [DefaultExecutionOrder(200)]
+    [DefaultExecutionOrder(300)]
     public class ActiveBinder : DataBinder
     {
         [SerializeField] protected string _condition;
