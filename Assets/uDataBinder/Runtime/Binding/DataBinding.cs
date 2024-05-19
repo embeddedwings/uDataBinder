@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -101,9 +101,9 @@ namespace uDataBinder
             reference.Remove(key);
         }
 
-        public static void Register(string keys, DataBinder dataBinder, GameObject baseObject = null)
+        public static void Register(string keys, DataBinder dataBinder, GameObject baseObject)
         {
-            if (dataBinder == null)
+            if (dataBinder == null || string.IsNullOrEmpty(keys))
             {
                 return;
             }

@@ -204,7 +204,7 @@ namespace uDataBinder.Repeater
 
         protected override Task RebuildAsync()
         {
-            DataBinding.Register(_target, this);
+            DataBinding.Register(_target, this, gameObject);
 
             var indexes = Indexes;
             if (indexes.Count > 0)

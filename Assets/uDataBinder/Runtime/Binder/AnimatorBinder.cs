@@ -25,7 +25,7 @@ namespace uDataBinder.Binder
         {
             base.Initialize();
 
-            DataBinding.Register(_value, this);
+            DataBinding.Register(_value, this, gameObject);
         }
 
         public override void Release()

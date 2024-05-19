@@ -34,9 +34,10 @@ namespace uDataBinder
                 case LexerToken.OP_OBJECT:
                     return (bool)value.Item2;
                 case LexerToken.OP_SYMBOL:
-                    string condition = (string)value.Item2;
-                    DataBinding.Register(condition, dataBinder);
-                    return DataBinding.GetValue<bool>(condition, dataBinder?.gameObject);
+                    var condition = (string)value.Item2;
+                    var baseObject = dataBinder != null ? dataBinder.gameObject : null;
+                    DataBinding.Register(condition, dataBinder, baseObject);
+                    return DataBinding.GetValue<bool>(condition, baseObject);
                 default:
                     Debug.LogError($"invalid token {value.Item1}");
                     return false;
@@ -50,9 +51,10 @@ namespace uDataBinder
                 case LexerToken.OP_OBJECT:
                     return value.Item2;
                 case LexerToken.OP_SYMBOL:
-                    string condition = (string)value.Item2;
-                    DataBinding.Register(condition, dataBinder);
-                    return DataBinding.GetValue(condition, dataBinder?.gameObject);
+                    var condition = (string)value.Item2;
+                    var baseObject = dataBinder != null ? dataBinder.gameObject : null;
+                    DataBinding.Register(condition, dataBinder, baseObject);
+                    return DataBinding.GetValue(condition, baseObject);
                 default:
                     Debug.LogError($"invalid token {value.Item1}");
                     return false;
