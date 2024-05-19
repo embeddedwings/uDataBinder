@@ -317,13 +317,23 @@ namespace uDataBinder
 
         public static T GetValue<T>(string keys, GameObject baseObject = null, RequireStruct<T> missing = null) where T : struct
         {
-            var value = GetValue(keys, baseObject);
-            if (value == null)
+            try
             {
-                return (T)Convert.ChangeType(keys, typeof(T));
+                var value = GetValue(keys, baseObject);
+                if (value == null)
+                {
+                    return (T)Convert.ChangeType(keys, typeof(T));
+                }
+                return ConvertValue<T>(value);
             }
-
-            return ConvertValue<T>(value);
+            catch (FormatException)
+            {
+                return default;
+            }
+            catch (InvalidCastException)
+            {
+                return default;
+            }
         }
 
         public static T GetValue<T>(string keys, GameObject baseObject = null, RequireClass<T> missing = null)
