@@ -29,16 +29,19 @@ namespace uDataBinder
                 _references[baseObject] = new DataBindingReference();
             }
 
+            var alreadyExist = _references[baseObject].Exist(key);
             _references[baseObject].Set(key, value);
 
-            foreach (var lazyRegister in _lazyRegister)
-            {
-                if (lazyRegister.Key.StartsWith(key))
+            if (!alreadyExist) {
+                foreach (var lazyRegister in _lazyRegister)
                 {
-                    var values = new List<(string, DataBinder, GameObject)>(lazyRegister.Value);
-                    foreach (var v in values)
+                    if (lazyRegister.Key.StartsWith(key))
                     {
-                        Register(v.Item1, v.Item2, v.Item3);
+                        var values = new List<(string, DataBinder, GameObject)>(lazyRegister.Value);
+                        foreach (var v in values)
+                        {
+                            Register(v.Item1, v.Item2, v.Item3);
+                        }
                     }
                 }
             }
@@ -117,6 +120,12 @@ namespace uDataBinder
                 {
                     _lazyRegister[keys] = new List<(string, DataBinder, GameObject)>();
                 }
+
+                if (_lazyRegister[keys].Any(v => v.Item2 == dataBinder && v.Item3 == baseObject))
+                {
+                    return;
+                }
+
                 _lazyRegister[keys].Add((keys, dataBinder, baseObject));
                 return;
             }
