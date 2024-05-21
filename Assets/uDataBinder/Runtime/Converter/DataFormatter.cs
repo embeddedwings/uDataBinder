@@ -15,6 +15,8 @@ namespace uDataBinder.Converter
             {
                 case int i:
                     return Task.FromResult(i.ToString(_format) as object);
+                case long l:
+                    return Task.FromResult(l.ToString(_format) as object);
                 case float f:
                     return Task.FromResult(f.ToString(_format) as object);
                 case double d:
