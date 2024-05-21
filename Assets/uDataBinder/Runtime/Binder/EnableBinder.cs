@@ -4,7 +4,7 @@ using UnityEngine;
 namespace uDataBinder.Binder
 {
     [DefaultExecutionOrder(300)]
-    public class ActiveBinder : DataBinder
+    public class EnableBinder : DataBinder
     {
         [SerializeField] protected string _condition;
         public string Condition
@@ -23,42 +23,27 @@ namespace uDataBinder.Binder
             }
         }
 
-        public Transform[] _true = new Transform[] { };
-        public Transform[] _false = new Transform[] { };
+        [SerializeField] protected MonoBehaviour[] _components = new MonoBehaviour[] { };
 
         public override void Initialize()
         {
             base.Initialize();
 
-            SetActive(false);
+            SetEnable(false);
         }
 
-        public virtual void SetActive(bool active)
+        public virtual void SetEnable(bool enabled)
         {
-            if (_true.Length == 0 && _false.Length == 0)
+            foreach (var component in _components)
             {
-                foreach (Transform child in transform)
-                {
-                    child.gameObject.SetActive(active);
-                }
-            }
-            else
-            {
-                foreach (var child in _true)
-                {
-                    child.gameObject.SetActive(active);
-                }
-                foreach (var child in _false)
-                {
-                    child.gameObject.SetActive(!active);
-                }
+                component.enabled = enabled;
             }
         }
 
         protected override Task RebuildAsync()
         {
             var active = ConditionBinding.Parse(_condition, this);
-            SetActive(active);
+            SetEnable(active);
             return Task.CompletedTask;
         }
     }

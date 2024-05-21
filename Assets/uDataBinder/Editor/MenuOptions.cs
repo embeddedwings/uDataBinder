@@ -270,8 +270,8 @@ namespace uDataBinder.Editor
             goFalse.name = "False";
             GameObjectUtility.SetParentAndAlign(goTrue, go);
             GameObjectUtility.SetParentAndAlign(goFalse, go);
-            activeBinder.True = new Transform[] { goTrue.transform };
-            activeBinder.False = new Transform[] { goFalse.transform };
+            activeBinder._true = new Transform[] { goTrue.transform };
+            activeBinder._false = new Transform[] { goFalse.transform };
 
             Undo.RegisterCreatedObjectUndo(go, "Create " + go.name);
             go.transform.position = Vector3.zero;
