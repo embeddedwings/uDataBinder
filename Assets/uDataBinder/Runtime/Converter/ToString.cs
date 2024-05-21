@@ -5,7 +5,7 @@ using UnityEngine;
 namespace uDataBinder.Converter
 {
     [DefaultExecutionOrder(200)]
-    public class DataFormatter : DataConverter
+    public class ToString : DataConverter
     {
         [SerializeField] protected string _format = "0.00";
 
