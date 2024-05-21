@@ -192,13 +192,15 @@ namespace uDataBinder
                                     {
                                         _tempObject[0] = key;
                                         data = indexerProperty.GetValue(data, _tempObject);
-                                        _cache[fullKey] = data;
                                     }
-                                    catch (KeyNotFoundException e)
+                                    catch (Exception e)
                                     {
+#if UNITY_EDITOR
                                         Debug.LogWarning(e);
+#endif
                                         data = null;
                                     }
+                                    _cache[fullKey] = data;
                                 }
                                 else
                                 {
