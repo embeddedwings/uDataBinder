@@ -188,9 +188,17 @@ namespace uDataBinder
                                 var indexerProperty = type.GetProperty(memberName, _stringType);
                                 if (indexerProperty != null)
                                 {
-                                    _tempObject[0] = key;
-                                    data = indexerProperty.GetValue(data, _tempObject);
-                                    _cache[fullKey] = data;
+                                    try
+                                    {
+                                        _tempObject[0] = key;
+                                        data = indexerProperty.GetValue(data, _tempObject);
+                                        _cache[fullKey] = data;
+                                    }
+                                    catch (KeyNotFoundException e)
+                                    {
+                                        Debug.LogWarning(e);
+                                        data = null;
+                                    }
                                 }
                                 else
                                 {
