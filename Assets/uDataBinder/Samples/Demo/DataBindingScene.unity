@@ -2641,9 +2641,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _condition: Test.Count>=10
-  True:
+  _true:
   - {fileID: 173951919}
-  False:
+  _false:
   - {fileID: 299614604}
 --- !u!1 &1514210539
 GameObject:
