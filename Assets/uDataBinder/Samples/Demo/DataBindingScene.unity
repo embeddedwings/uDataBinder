@@ -3388,7 +3388,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _location: Test
   _color: {r: 1, g: 1, b: 1, a: 1}
-  _nativeSize: 0
+  _size: 0
   _customPivot: 0
 --- !u!1 &1804181301
 GameObject:

@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.UI;
 
 #if UNITY_ADDRESSABLES
@@ -13,6 +14,14 @@ namespace uDataBinder.Binder
     [RequireComponent(typeof(Image))]
     public class ImageBinder : DataBinder
     {
+        public enum ImageSize
+        {
+            Default,
+            Native,
+            Contain,
+            Cover,
+        }
+
         protected Image _image;
         protected Image Image => this == null || _image != null ? _image : _image = GetComponent<Image>();
 
@@ -37,8 +46,7 @@ namespace uDataBinder.Binder
         }
 
         [SerializeField] protected Color _color = Color.white;
-
-        [SerializeField] protected bool _nativeSize = false;
+        [SerializeField] protected ImageSize _size = ImageSize.Default;
         [SerializeField] protected bool _customPivot = false;
 
         public override void Initialize()
@@ -68,10 +76,19 @@ namespace uDataBinder.Binder
                 Image.sprite = sprite;
                 Image.color = _color;
 
-                if (_nativeSize)
+                if (_size == ImageSize.Native)
                 {
                     SetNativeSize(sprite);
                 }
+                else if (_size == ImageSize.Contain)
+                {
+                    SetContainSize(sprite);
+                }
+                else if (_size == ImageSize.Cover)
+                {
+                    SetCoverSize(sprite);
+                }
+
                 if (_customPivot)
                 {
                     SetCustomPivot(sprite);
@@ -84,9 +101,29 @@ namespace uDataBinder.Binder
             }
         }
 
-        protected override Task RebuildAsync()
+        protected override async Task RebuildAsync()
         {
             var location = TemplateBinding.Parse(Location, this);
+
+            if (location.StartsWith("http"))
+            {
+                using var request = UnityWebRequestTexture.GetTexture(location);
+
+                var operation = request.SendWebRequest();
+                while (!operation.isDone)
+                {
+                    await Task.Yield();
+                }
+
+                if (request.result == UnityWebRequest.Result.Success)
+                {
+                    var texture = (request.downloadHandler as DownloadHandlerTexture).texture;
+                    var sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero);
+                    SetSprite(sprite);
+                }
+                return;
+            }
+
 #if UNITY_ADDRESSABLES
             var handle = Addressables.LoadAssetAsync<Sprite>(location);
             handle.Completed += (data) => {
@@ -97,7 +134,7 @@ namespace uDataBinder.Binder
 
                 SetSprite(sprite);
             };
-            return handle.Task;
+            await handle.Task;
 #else
             var handle = Resources.LoadAsync<Sprite>(location);
             var task = new TaskCompletionSource<Sprite>();
@@ -112,7 +149,7 @@ namespace uDataBinder.Binder
                 SetSprite(sprite);
                 task.SetResult(sprite);
             };
-            return task.Task;
+            await task.Task;
 #endif
         }
 
@@ -125,12 +162,51 @@ namespace uDataBinder.Binder
             RectTransform.pivot = new Vector2(sprite.pivot.x / sprite.rect.width, sprite.pivot.y / sprite.rect.height);
         }
 
+        public virtual void SetContainSize(Sprite sprite)
+        {
+            if (RectTransform == null)
+            {
+                return;
+            }
+
+            var size = RectTransform.sizeDelta;
+            var ratio = sprite.rect.width / sprite.rect.height;
+            if (size.x / ratio > size.y)
+            {
+                RectTransform.sizeDelta = new Vector2(size.y * ratio, size.y);
+            }
+            else
+            {
+                RectTransform.sizeDelta = new Vector2(size.x, size.x / ratio);
+            }
+        }
+
+        public virtual void SetCoverSize(Sprite sprite)
+        {
+            if (RectTransform == null)
+            {
+                return;
+            }
+
+            var size = RectTransform.sizeDelta;
+            var ratio = sprite.rect.width / sprite.rect.height;
+            if (size.x / ratio < size.y)
+            {
+                RectTransform.sizeDelta = new Vector2(size.y * ratio, size.y);
+            }
+            else
+            {
+                RectTransform.sizeDelta = new Vector2(size.x, size.x / ratio);
+            }
+        }
+
         public virtual void SetNativeSize(Sprite sprite)
         {
             if (RectTransform == null)
             {
                 return;
             }
+
             RectTransform.sizeDelta = new Vector2(sprite.rect.width, sprite.rect.height);
         }
     }
