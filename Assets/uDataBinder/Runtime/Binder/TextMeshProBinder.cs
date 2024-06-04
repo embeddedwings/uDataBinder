@@ -5,11 +5,11 @@ using TMPro;
 namespace uDataBinder.Binder
 {
     [DefaultExecutionOrder(500)]
-    [RequireComponent(typeof(TextMeshProUGUI))]
+    [RequireComponent(typeof(TMP_Text))]
     public class TextMeshProBinder : DataBinder
     {
-        protected TextMeshProUGUI _text;
-        protected TextMeshProUGUI Text => this == null || _text != null ? _text : _text = GetComponent<TextMeshProUGUI>();
+        protected TMP_Text _text;
+        protected TMP_Text Text => this == null || _text != null ? _text : _text = GetComponent<TMP_Text>();
 
         [SerializeField][TextArea(3, 10)] protected string _templateText;
         public string TemplateText
