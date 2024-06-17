@@ -1,6 +1,6 @@
+
 using System.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.Networking;
 using UnityEngine.UI;
 
 #if UNITY_ADDRESSABLES
@@ -104,23 +104,10 @@ namespace uDataBinder.Binder
         protected override async Task RebuildAsync()
         {
             var location = TemplateBinding.Parse(Location, this);
-
             if (location.StartsWith("http"))
             {
-                using var request = UnityWebRequestTexture.GetTexture(location);
-
-                var operation = request.SendWebRequest();
-                while (!operation.isDone)
-                {
-                    await Task.Yield();
-                }
-
-                if (request.result == UnityWebRequest.Result.Success)
-                {
-                    var texture = (request.downloadHandler as DownloadHandlerTexture).texture;
-                    var sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero);
-                    SetSprite(sprite);
-                }
+                var sprite = await WebLoader.LoadAsset<Sprite>(location);
+                SetSprite(sprite);
                 return;
             }
 
