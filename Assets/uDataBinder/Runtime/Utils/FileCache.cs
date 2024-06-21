@@ -22,7 +22,6 @@ namespace uDataBinder.Utils
             {
                 Directory.CreateDirectory(cacheDirectory);
             }
-            Debug.Log(cacheDirectory);
             return cacheDirectory;
         }
 
