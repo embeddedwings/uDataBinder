@@ -36,22 +36,25 @@ public class WebLoaderAsset
         --count;
         if (count <= 0)
         {
-            if (asset.GetType() == typeof(Texture2D))
+            if (asset != null)
             {
-                UnityEngine.Object.Destroy(asset as Texture2D);
-            }
-            else if (asset.GetType() == typeof(Sprite))
-            {
-                var sprite = asset as Sprite;
-                if (sprite.texture != null)
+                if (asset.GetType() == typeof(Texture2D))
                 {
-                    UnityEngine.Object.Destroy(sprite.texture);
+                    UnityEngine.Object.Destroy(asset as Texture2D);
                 }
-                UnityEngine.Object.Destroy(sprite);
-            }
-            else if (asset.GetType() == typeof(AudioClip))
-            {
-                UnityEngine.Object.Destroy(asset as AudioClip);
+                else if (asset.GetType() == typeof(Sprite))
+                {
+                    var sprite = asset as Sprite;
+                    if (sprite.texture != null)
+                    {
+                        UnityEngine.Object.Destroy(sprite.texture);
+                    }
+                    UnityEngine.Object.Destroy(sprite);
+                }
+                else if (asset.GetType() == typeof(AudioClip))
+                {
+                    UnityEngine.Object.Destroy(asset as AudioClip);
+                }
             }
 
             count = 0;
