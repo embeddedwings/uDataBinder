@@ -7,10 +7,11 @@ using uDataBinder.Utils;
 using UnityEngine;
 using UnityEngine.Networking;
 
-public class WebLoaderReport {
+public class WebLoaderReport
+{
     public float progress;
-    public float downloadedSize;
-    public float totalSize;
+    public long downloadedSize;
+    public long totalSize;
 }
 
 public static class WebLoader
@@ -30,10 +31,10 @@ public static class WebLoader
         var webRequest = UnityWebRequest.Get(url);
         webRequest.SendWebRequest();
 
-        progress?.Report(new WebLoaderReport { progress = 0.0f, downloadedSize = 0.0f, totalSize = totalSize });
+        progress?.Report(new WebLoaderReport { progress = 0.0f, downloadedSize = 0, totalSize = totalSize });
         while (!webRequest.isDone)
         {
-            progress?.Report(new WebLoaderReport { progress = webRequest.downloadProgress, downloadedSize = webRequest.downloadedBytes, totalSize = totalSize });
+            progress?.Report(new WebLoaderReport { progress = webRequest.downloadProgress, downloadedSize = (long)webRequest.downloadedBytes, totalSize = totalSize });
             await Task.Yield();
         }
         progress?.Report(new WebLoaderReport { progress = 1.0f, downloadedSize = totalSize, totalSize = totalSize });
@@ -102,10 +103,10 @@ public static class WebLoader
         var webRequest = UnityWebRequestMultimedia.GetAudioClip(url, type);
         webRequest.SendWebRequest();
 
-        progress?.Report(new WebLoaderReport { progress = 0.0f, downloadedSize = 0.0f, totalSize = totalSize });
+        progress?.Report(new WebLoaderReport { progress = 0.0f, downloadedSize = 0, totalSize = totalSize });
         while (!webRequest.isDone)
         {
-            progress?.Report(new WebLoaderReport { progress = webRequest.downloadProgress, downloadedSize = webRequest.downloadedBytes, totalSize = totalSize });
+            progress?.Report(new WebLoaderReport { progress = webRequest.downloadProgress, downloadedSize = (long)webRequest.downloadedBytes, totalSize = totalSize });
             await Task.Yield();
         }
         progress?.Report(new WebLoaderReport { progress = 1.0f, downloadedSize = totalSize, totalSize = totalSize });
@@ -163,10 +164,10 @@ public static class WebLoader
     public static async Task DownloadAssets(string[] urls, string directory = "cache", bool force = false, IProgress<WebLoaderReport> progress = null)
     {
         var totalSize = await GetAssetsSize(urls, directory, force);
-        progress?.Report(new WebLoaderReport { progress = 0.0f, downloadedSize = 0.0f, totalSize = totalSize });
+        progress?.Report(new WebLoaderReport { progress = 0.0f, downloadedSize = 0L, totalSize = totalSize });
 
         var tasks = new List<Task>();
-        var downloadedSizes = new List<float>(urls.Length);
+        var downloadedSizes = new List<long>(urls.Length);
 
         var i = 0;
         foreach (var url in urls)
