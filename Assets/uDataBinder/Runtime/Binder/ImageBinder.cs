@@ -10,6 +10,14 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace uDataBinder.Binder
 {
+    public enum LoadType
+    {
+        None,
+        Resources,
+        Web,
+        Addressables,
+    }
+
     [DefaultExecutionOrder(500)]
     [RequireComponent(typeof(Image))]
     public class ImageBinder : DataBinder
@@ -49,11 +57,38 @@ namespace uDataBinder.Binder
         [SerializeField] protected ImageSize _size = ImageSize.Default;
         [SerializeField] protected bool _customPivot = false;
 
+        private LoadType currentLoadType = LoadType.None;
+        private Sprite currentSprite;
+
+
         public override void Initialize()
         {
             base.Initialize();
 
             Image.color = Color.clear;
+        }
+
+        protected void UnloadCurrentAsset()
+        {
+            if (currentSprite != null)
+            {
+                if (currentLoadType == LoadType.Resources)
+                {
+                    Resources.UnloadAsset(currentSprite);
+                }
+                else if (currentLoadType == LoadType.Web)
+                {
+                    WebLoader.UnloadAsset(currentSprite);
+                }
+#if UNITY_ADDRESSABLES
+                else if (loadType == LoadType.Addressables)
+                {
+                    Addressables.Release(sprite);
+                }
+#endif
+                currentSprite = null;
+                currentLoadType = LoadType.None;
+            }
         }
 
         public override void Release()
@@ -65,12 +100,14 @@ namespace uDataBinder.Binder
             }
             _image = null;
             _rectTransform = null;
-
+            UnloadCurrentAsset();
             base.Release();
         }
 
-        protected void SetSprite(Sprite sprite)
+        protected void SetSprite(Sprite sprite, LoadType loadType)
         {
+            UnloadCurrentAsset();
+
             if (sprite != null)
             {
                 Image.sprite = sprite;
@@ -93,6 +130,9 @@ namespace uDataBinder.Binder
                 {
                     SetCustomPivot(sprite);
                 }
+
+                currentSprite = sprite;
+                currentLoadType = loadType;
             }
             else
             {
@@ -107,7 +147,8 @@ namespace uDataBinder.Binder
             if (location.StartsWith("http"))
             {
                 var sprite = await WebLoader.LoadAsset<Sprite>(location);
-                SetSprite(sprite);
+
+                SetSprite(sprite, LoadType.Web);
                 return;
             }
 
@@ -119,7 +160,7 @@ namespace uDataBinder.Binder
                     sprite = data.Result;
                 }
 
-                SetSprite(sprite);
+                SetSprite(sprite, LoadType.Addressables);
             };
             await handle.Task;
 #else
@@ -133,7 +174,7 @@ namespace uDataBinder.Binder
                     sprite = handle.asset as Sprite;
                 }
 
-                SetSprite(sprite);
+                SetSprite(sprite, LoadType.Resources);
                 task.SetResult(sprite);
             };
             await task.Task;
