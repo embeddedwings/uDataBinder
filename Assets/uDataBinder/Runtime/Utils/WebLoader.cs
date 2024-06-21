@@ -255,6 +255,11 @@ public static class WebLoader
         }
     }
 
+    public static void UnloadAsset(object asset)
+    {
+        var url = cacheAssets.FirstOrDefault(kv => kv.Value.asset == asset).Key;
+        UnloadAsset(url);
+    }
 
     public static async Task DownloadAssets(string[] urls, string directory = "cache", bool force = false, IProgress<WebLoaderReport> progress = null)
     {
