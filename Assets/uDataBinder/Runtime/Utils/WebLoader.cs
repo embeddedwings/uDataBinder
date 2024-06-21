@@ -14,9 +14,55 @@ public class WebLoaderReport
     public long totalSize;
 }
 
+public class WebLoaderAsset
+{
+    public string url;
+    public object asset;
+    public int count = 0;
+
+    public WebLoaderAsset(string url, object asset)
+    {
+        this.url = url;
+        this.asset = asset;
+    }
+
+    public void Load()
+    {
+        ++count;
+    }
+
+    public void Unload()
+    {
+        --count;
+        if (count <= 0)
+        {
+            if (asset.GetType() == typeof(Texture2D))
+            {
+                UnityEngine.Object.Destroy(asset as Texture2D);
+            }
+            else if (asset.GetType() == typeof(Sprite))
+            {
+                var sprite = asset as Sprite;
+                if (sprite.texture != null)
+                {
+                    UnityEngine.Object.Destroy(sprite.texture);
+                }
+                UnityEngine.Object.Destroy(sprite);
+            }
+            else if (asset.GetType() == typeof(AudioClip))
+            {
+                UnityEngine.Object.Destroy(asset as AudioClip);
+            }
+
+            count = 0;
+        }
+    }
+}
+
 public static class WebLoader
 {
     private static readonly Dictionary<string, long> cacheAssetSizes = new();
+    private static readonly Dictionary<string, WebLoaderAsset> cacheAssets = new();
 
     private static async Task<byte[]> LoadBytes(string url, string directory = "cache", bool force = false, IProgress<WebLoaderReport> progress = null)
     {
@@ -50,8 +96,14 @@ public static class WebLoader
         return bytes;
     }
 
-    private static async Task<Texture2D> LoadTexture(string url, string directory = "cache", bool force = false, IProgress<WebLoaderReport> progress = null)
+    private static async Task<Texture2D> LoadTexture(string url, string directory = "cache", bool force = false, IProgress<WebLoaderReport> progress = null, bool isSprite = false)
     {
+        if (!force && cacheAssets.ContainsKey(url) && cacheAssets[url].asset.GetType() == typeof(Texture2D))
+        {
+            cacheAssets[url].Load();
+            return cacheAssets[url].asset as Texture2D;
+        }
+
         var bytes = await LoadBytes(url, directory, force, progress);
         if (bytes == null)
         {
@@ -60,21 +112,49 @@ public static class WebLoader
 
         var texture = new Texture2D(2, 2);
         texture.LoadImage(bytes);
+
+        if (!isSprite)
+        {
+            if (!cacheAssets.ContainsKey(url))
+            {
+                cacheAssets[url] = new WebLoaderAsset(url, texture);
+            }
+            cacheAssets[url].Load();
+        }
         return texture;
     }
 
     private static async Task<Sprite> LoadSprite(string url, string directory = "cache", bool force = false, IProgress<WebLoaderReport> progress = null)
     {
-        var texture = await LoadTexture(url, directory, force, progress);
+        if (!force && cacheAssets.ContainsKey(url) && cacheAssets[url].asset.GetType() == typeof(Sprite))
+        {
+            cacheAssets[url].Load();
+            return cacheAssets[url].asset as Sprite;
+        }
+
+        var texture = await LoadTexture(url, directory, force, progress, true);
         if (texture == null)
         {
             return null;
         }
-        return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero);
+        var sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero);
+
+        if (!cacheAssets.ContainsKey(url))
+        {
+            cacheAssets[url] = new WebLoaderAsset(url, sprite);
+        }
+        cacheAssets[url].Load();
+        return sprite;
     }
 
     private static async Task<AudioClip> LoadAudioClip(string url, string directory = "cache", bool force = false, IProgress<WebLoaderReport> progress = null)
     {
+        if (!force && cacheAssets.ContainsKey(url) && cacheAssets[url].asset.GetType() == typeof(AudioClip))
+        {
+            cacheAssets[url].Load();
+            return cacheAssets[url].asset as AudioClip;
+        }
+
         var path = url;
         if (!force && FileCache.Exists(url, directory))
         {
@@ -124,6 +204,12 @@ public static class WebLoader
         }
 
         var audioClip = DownloadHandlerAudioClip.GetContent(webRequest);
+        if (!cacheAssets.ContainsKey(url))
+        {
+            cacheAssets[url] = new WebLoaderAsset(url, audioClip);
+        }
+        cacheAssets[url].Load();
+
         return audioClip;
     }
 
@@ -158,6 +244,14 @@ public static class WebLoader
         else
         {
             throw new NotSupportedException();
+        }
+    }
+
+    public static void UnloadAsset(string url)
+    {
+        if (cacheAssets.ContainsKey(url))
+        {
+            cacheAssets[url].Unload();
         }
     }
 
