@@ -252,7 +252,7 @@ public static class WebLoader
 
     public static void UnloadAsset(string url)
     {
-        if (cacheAssets.ContainsKey(url))
+        if (!string.IsNullOrEmpty(url) && cacheAssets.ContainsKey(url))
         {
             cacheAssets[url].Unload();
         }
