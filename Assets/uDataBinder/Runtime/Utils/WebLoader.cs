@@ -7,25 +7,36 @@ using uDataBinder.Utils;
 using UnityEngine;
 using UnityEngine.Networking;
 
+public class WebLoaderReport {
+    public float progress;
+    public float downloadedSize;
+    public float totalSize;
+}
+
 public static class WebLoader
 {
-    private static async Task<byte[]> LoadBytes(string url, string directory = "cache", bool force = false, IProgress<float> progress = null)
+    private static readonly Dictionary<string, long> cacheAssetSizes = new();
+
+    private static async Task<byte[]> LoadBytes(string url, string directory = "cache", bool force = false, IProgress<WebLoaderReport> progress = null)
     {
+        var totalSize = await GetAssetSize(url, directory, force);
+
         if (!force && FileCache.Exists(url, directory))
         {
-            progress?.Report(1.0f);
+            progress?.Report(new WebLoaderReport { progress = 1.0f, downloadedSize = totalSize, totalSize = totalSize });
             return FileCache.Load(url, directory);
         }
 
         var webRequest = UnityWebRequest.Get(url);
         webRequest.SendWebRequest();
 
+        progress?.Report(new WebLoaderReport { progress = 0.0f, downloadedSize = 0.0f, totalSize = totalSize });
         while (!webRequest.isDone)
         {
-            progress?.Report(webRequest.downloadProgress);
+            progress?.Report(new WebLoaderReport { progress = webRequest.downloadProgress, downloadedSize = webRequest.downloadedBytes, totalSize = totalSize });
             await Task.Yield();
         }
-        progress?.Report(1.0f);
+        progress?.Report(new WebLoaderReport { progress = 1.0f, downloadedSize = totalSize, totalSize = totalSize });
 
         if (webRequest.result != UnityWebRequest.Result.Success)
         {
@@ -38,7 +49,7 @@ public static class WebLoader
         return bytes;
     }
 
-    private static async Task<Texture2D> LoadTexture(string url, string directory = "cache", bool force = false, IProgress<float> progress = null)
+    private static async Task<Texture2D> LoadTexture(string url, string directory = "cache", bool force = false, IProgress<WebLoaderReport> progress = null)
     {
         var bytes = await LoadBytes(url, directory, force, progress);
         if (bytes == null)
@@ -51,7 +62,7 @@ public static class WebLoader
         return texture;
     }
 
-    private static async Task<Sprite> LoadSprite(string url, string directory = "cache", bool force = false, IProgress<float> progress = null)
+    private static async Task<Sprite> LoadSprite(string url, string directory = "cache", bool force = false, IProgress<WebLoaderReport> progress = null)
     {
         var texture = await LoadTexture(url, directory, force, progress);
         if (texture == null)
@@ -61,7 +72,7 @@ public static class WebLoader
         return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero);
     }
 
-    private static async Task<AudioClip> LoadAudioClip(string url, string directory = "cache", bool force = false, IProgress<float> progress = null)
+    private static async Task<AudioClip> LoadAudioClip(string url, string directory = "cache", bool force = false, IProgress<WebLoaderReport> progress = null)
     {
         var path = url;
         if (!force && FileCache.Exists(url, directory))
@@ -87,15 +98,17 @@ public static class WebLoader
             }
         }
 
+        var totalSize = await GetAssetSize(url, directory, force);
         var webRequest = UnityWebRequestMultimedia.GetAudioClip(url, type);
         webRequest.SendWebRequest();
 
+        progress?.Report(new WebLoaderReport { progress = 0.0f, downloadedSize = 0.0f, totalSize = totalSize });
         while (!webRequest.isDone)
         {
-            progress?.Report(webRequest.downloadProgress);
+            progress?.Report(new WebLoaderReport { progress = webRequest.downloadProgress, downloadedSize = webRequest.downloadedBytes, totalSize = totalSize });
             await Task.Yield();
         }
-        progress?.Report(1.0f);
+        progress?.Report(new WebLoaderReport { progress = 1.0f, downloadedSize = totalSize, totalSize = totalSize });
 
         if (webRequest.result != UnityWebRequest.Result.Success)
         {
@@ -113,13 +126,13 @@ public static class WebLoader
         return audioClip;
     }
 
-    public static async Task<string> LoadString(string url, string directory = "cache", bool force = false, IProgress<float> progress = null)
+    public static async Task<string> LoadString(string url, string directory = "cache", bool force = false, IProgress<WebLoaderReport> progress = null)
     {
         var bytes = await LoadBytes(url, directory, force, progress);
         return bytes == null ? null : System.Text.Encoding.UTF8.GetString(bytes);
     }
 
-    public static async Task<T> LoadAsset<T>(string url, string directory = "cache", bool force = false, IProgress<float> progress = null) where T : class
+    public static async Task<T> LoadAsset<T>(string url, string directory = "cache", bool force = false, IProgress<WebLoaderReport> progress = null) where T : class
     {
         if (typeof(T) == typeof(Texture2D))
         {
@@ -147,32 +160,42 @@ public static class WebLoader
         }
     }
 
-    public static async Task DownloadAssets(string[] urls, string directory = "cache", bool force = false, IProgress<float> progress = null)
+    public static async Task DownloadAssets(string[] urls, string directory = "cache", bool force = false, IProgress<WebLoaderReport> progress = null)
     {
-        progress?.Report(0.0f);
+        var totalSize = await GetAssetsSize(urls, directory, force);
+        progress?.Report(new WebLoaderReport { progress = 0.0f, downloadedSize = 0.0f, totalSize = totalSize });
 
         var tasks = new List<Task>();
-        var progresses = new List<float>(urls.Length);
+        var downloadedSizes = new List<float>(urls.Length);
 
         var i = 0;
         foreach (var url in urls)
         {
-            tasks.Add(LoadBytes(url, directory, force, new Progress<float>(f =>
+            tasks.Add(LoadBytes(url, directory, force, new Progress<WebLoaderReport>(f =>
             {
-                progresses[i] = f;
-                progress?.Report(progresses.Sum() / urls.Count());
+                downloadedSizes[i] = f.downloadedSize;
+                var size = downloadedSizes.Sum();
+                progress?.Report(new WebLoaderReport { progress = size / totalSize, downloadedSize = size, totalSize = totalSize });
             })));
         }
 
         await Task.WhenAll(tasks);
-        progress?.Report(1.0f);
+        progress?.Report(new WebLoaderReport { progress = 1.0f, downloadedSize = totalSize, totalSize = totalSize });
     }
 
     public static async Task<long> GetAssetSize(string url, string directory = "cache", bool force = false)
     {
-        if (!force && FileCache.Exists(url, directory))
+        if (!force)
         {
-            return FileCache.GetSize(url, directory);
+            if (cacheAssetSizes.ContainsKey(url))
+            {
+                return cacheAssetSizes[url];
+            }
+
+            if (FileCache.Exists(url, directory))
+            {
+                return FileCache.GetSize(url, directory);
+            }
         }
 
         var webRequest = UnityWebRequest.Head(url);
@@ -187,7 +210,10 @@ public static class WebLoader
             Debug.LogError(webRequest.error);
             return 0;
         }
-        return long.Parse(webRequest.GetResponseHeader("Content-Length"));
+
+        var size = long.Parse(webRequest.GetResponseHeader("Content-Length"));
+        cacheAssetSizes[url] = size;
+        return size;
     }
 
     public static async Task<long> GetAssetsSize(string[] urls, string directory = "cache", bool force = false)
