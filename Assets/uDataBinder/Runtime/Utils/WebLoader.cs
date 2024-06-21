@@ -255,23 +255,28 @@ public static class WebLoader
         }
     }
 
+
     public static async Task DownloadAssets(string[] urls, string directory = "cache", bool force = false, IProgress<WebLoaderReport> progress = null)
     {
         var totalSize = await GetAssetsSize(urls, directory, force);
         progress?.Report(new WebLoaderReport { progress = 0.0f, downloadedSize = 0L, totalSize = totalSize });
 
         var tasks = new List<Task>();
-        var downloadedSizes = new List<long>(urls.Length);
+        var downloadedSizes = Enumerable.Repeat(0L, urls.Length).ToList();
 
-        var i = 0;
-        foreach (var url in urls)
+        void load(int i)
         {
-            tasks.Add(LoadBytes(url, directory, force, new Progress<WebLoaderReport>(f =>
+            tasks.Add(LoadBytes(urls[i], directory, force, new Progress<WebLoaderReport>(f =>
             {
                 downloadedSizes[i] = f.downloadedSize;
                 var size = downloadedSizes.Sum();
                 progress?.Report(new WebLoaderReport { progress = size / totalSize, downloadedSize = size, totalSize = totalSize });
             })));
+        }
+
+        for (var i = 0; i < urls.Length; ++i)
+        {
+            load(i);
         }
 
         await Task.WhenAll(tasks);
