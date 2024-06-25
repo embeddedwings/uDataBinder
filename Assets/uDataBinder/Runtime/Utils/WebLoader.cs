@@ -29,6 +29,10 @@ public class WebLoaderAsset
     public void Load()
     {
         ++count;
+
+#if DATABINDER_PROFILER
+            Debug.Log($"WebLoaderAsset.Load({count}): {url}");
+#endif
     }
 
     public void Unload()
@@ -56,9 +60,13 @@ public class WebLoaderAsset
                     UnityEngine.Object.Destroy(asset as AudioClip);
                 }
             }
-
             count = 0;
         }
+
+
+#if DATABINDER_PROFILER
+            Debug.Log($"WebLoaderAsset.Unload({count}): {url}");
+#endif
     }
 }
 
@@ -216,7 +224,7 @@ public static class WebLoader
         return audioClip;
     }
 
-    public static async Task<string> LoadString(string url, string directory = "cache", bool force = false, IProgress<WebLoaderReport> progress = null)
+    private static async Task<string> LoadString(string url, string directory = "cache", bool force = false, IProgress<WebLoaderReport> progress = null)
     {
         var bytes = await LoadBytes(url, directory, force, progress);
         return bytes == null ? null : System.Text.Encoding.UTF8.GetString(bytes);
