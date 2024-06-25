@@ -31,42 +31,46 @@ public class WebLoaderAsset
         ++count;
 
 #if UNITY_EDITOR && DATABINDER_PROFILER
-            Debug.Log($"WebLoaderAsset.Load({count}): {url}");
+        Debug.Log($"WebLoaderAsset.Load({count}): {url}");
 #endif
     }
 
-    public void Unload()
+    public bool Unload()
     {
         --count;
-        if (count <= 0)
-        {
-            if (asset != null)
-            {
-                if (asset.GetType() == typeof(Texture2D))
-                {
-                    UnityEngine.Object.Destroy(asset as Texture2D);
-                }
-                else if (asset.GetType() == typeof(Sprite))
-                {
-                    var sprite = asset as Sprite;
-                    if (sprite.texture != null)
-                    {
-                        UnityEngine.Object.Destroy(sprite.texture);
-                    }
-                    UnityEngine.Object.Destroy(sprite);
-                }
-                else if (asset.GetType() == typeof(AudioClip))
-                {
-                    UnityEngine.Object.Destroy(asset as AudioClip);
-                }
-            }
-            count = 0;
-        }
-
 
 #if UNITY_EDITOR && DATABINDER_PROFILER
-            Debug.Log($"WebLoaderAsset.Unload({count}): {url}");
+        Debug.Log($"WebLoaderAsset.Unload({count}): {url}");
 #endif
+
+        if (count > 0)
+        {
+            return false;
+        }
+
+        if (asset != null)
+        {
+            if (asset.GetType() == typeof(Texture2D))
+            {
+                UnityEngine.Object.Destroy(asset as Texture2D);
+            }
+            else if (asset.GetType() == typeof(Sprite))
+            {
+                var sprite = asset as Sprite;
+                if (sprite.texture != null)
+                {
+                    UnityEngine.Object.Destroy(sprite.texture);
+                }
+                UnityEngine.Object.Destroy(sprite);
+            }
+            else if (asset.GetType() == typeof(AudioClip))
+            {
+                UnityEngine.Object.Destroy(asset as AudioClip);
+            }
+        }
+
+        count = 0;
+        return true;
     }
 }
 
@@ -267,7 +271,10 @@ public static class WebLoader
     {
         if (!string.IsNullOrEmpty(url) && cacheAssets.ContainsKey(url))
         {
-            cacheAssets[url].Unload();
+            if (cacheAssets[url].Unload())
+            {
+                cacheAssets.Remove(url);
+            }
         }
     }
 
