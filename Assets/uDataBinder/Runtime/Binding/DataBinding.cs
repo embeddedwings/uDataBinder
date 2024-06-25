@@ -206,7 +206,7 @@ namespace uDataBinder
 
             if (_rebuildCompleted.Count() > 0)
             {
-#if DATABINDER_PROFILER
+#if UNITY_EDITOR && DATABINDER_PROFILER
                 Debug.Log($"Rebuild: {_rebuildCompleted.Count()}\n {string.Join(", ", _rebuildCompleted.Select(v => v.name))}");
 #endif
                 _rebuildCompleted.Clear();

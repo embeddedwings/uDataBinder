@@ -30,7 +30,7 @@ public class WebLoaderAsset
     {
         ++count;
 
-#if DATABINDER_PROFILER
+#if UNITY_EDITOR && DATABINDER_PROFILER
             Debug.Log($"WebLoaderAsset.Load({count}): {url}");
 #endif
     }
@@ -64,7 +64,7 @@ public class WebLoaderAsset
         }
 
 
-#if DATABINDER_PROFILER
+#if UNITY_EDITOR && DATABINDER_PROFILER
             Debug.Log($"WebLoaderAsset.Unload({count}): {url}");
 #endif
     }
