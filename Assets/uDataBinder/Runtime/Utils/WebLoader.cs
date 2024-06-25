@@ -232,6 +232,11 @@ public static class WebLoader
 
     public static async Task<T> LoadAsset<T>(string url, string directory = "cache", bool force = false, IProgress<WebLoaderReport> progress = null) where T : class
     {
+        if (string.IsNullOrEmpty(url))
+        {
+            return null;
+        }
+
         if (typeof(T) == typeof(Texture2D))
         {
             return await LoadTexture(url, directory, force, progress) as T;
