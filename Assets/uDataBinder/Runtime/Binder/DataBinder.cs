@@ -78,7 +78,11 @@ namespace uDataBinder.Binder
         {
             if (!_rebuildTask.IsCompleted)
             {
-                _rebuildTask.Dispose();
+                try
+                {
+                    _rebuildTask.Dispose();
+                }
+                catch {}
                 _rebuildTask = Task.CompletedTask;
             }
 
