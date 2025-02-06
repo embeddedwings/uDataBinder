@@ -144,6 +144,13 @@ namespace uDataBinder.Binder
         protected override async Task RebuildAsync()
         {
             var location = TemplateBinding.Parse(Location, this);
+            
+            if(string.IsNullOrEmpty(location))
+            {
+                SetSprite(null, LoadType.None);
+                return;
+            }
+
             if (location.StartsWith("http"))
             {
                 var sprite = await WebLoader.LoadAsset<Sprite>(location);
