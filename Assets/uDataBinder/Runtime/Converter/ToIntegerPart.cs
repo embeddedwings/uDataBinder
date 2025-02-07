@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace uDataBinder.Converter
 {
-    [DefaultExecutionOrder(200)]
+    [DefaultExecutionOrder(210)]
     public class ToIntegerPart : DataConverter
     {
         [SerializeField] protected int _digits = 2;
