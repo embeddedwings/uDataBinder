@@ -24,6 +24,11 @@ namespace uDataBinder.Converter
         {
             var value = DataBinding.ConvertValue<float>(v);
 
+            if (float.IsNaN(value))
+            {
+                return Task.FromResult(_currentValue as object);
+            }
+
             if (_currentValue == value)
             {
                 return Task.FromResult(value as object);
