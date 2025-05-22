@@ -298,7 +298,7 @@ public static class WebLoader
             {
                 downloadedSizes[i] = f.downloadedSize;
                 var size = downloadedSizes.Sum();
-                progress?.Report(new WebLoaderReport { progress = size / totalSize, downloadedSize = size, totalSize = totalSize });
+                progress?.Report(new WebLoaderReport { progress = (float)size / totalSize, downloadedSize = size, totalSize = totalSize });
             })));
         }
 
