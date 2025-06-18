@@ -18,9 +18,11 @@ namespace uDataBinder.Converter
                 case long:
                     return Task.FromResult(zeros as object);
                 case float f:
-                    return Task.FromResult(Math.Floor((f - (int)f) * Mathf.Pow(10, _digits)).ToString(zeros) as object);
+                    var fStr = f.ToString($"F{_digits}");
+                    return Task.FromResult(fStr.Substring(fStr.IndexOf('.') + 1, _digits) as object);
                 case double d:
-                    return Task.FromResult(Math.Floor((d - (int)d) * Mathf.Pow(10, _digits)).ToString(zeros) as object);
+                    var dStr = d.ToString($"F{_digits}");
+                    return Task.FromResult(dStr.Substring(dStr.IndexOf('.') + 1, _digits) as object);
             }
 
             var value = DataBinding.ConvertValue<float>(v);
